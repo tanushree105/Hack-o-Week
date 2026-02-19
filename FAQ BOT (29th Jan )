@@ -1,0 +1,32 @@
+faq_answers = {
+    "password": "To reset your password, go to Settings and click on 'Reset Password'.",
+    "account": "To create an account, click on 'Sign Up' and fill in your details.",
+    "refund": "You can request a refund within 7 days of purchase.",
+    "contact": "You can contact support at support@example.com."
+}
+
+synonym_groups = {
+    "password": ["password", "reset", "forgot", "change"],
+    "account": ["account", "register", "signup", "create"],
+    "refund": ["refund", "return", "money"],
+    "contact": ["contact", "support", "help"]
+}
+
+def get_answer(user_input):
+    user_input = user_input.lower()
+    for key in synonym_groups:
+        for word in synonym_groups[key]:
+            if word in user_input:
+                return faq_answers[key]
+    return "Sorry, I don't understand your question."
+
+print("Welcome to Synonym Aware FAQ Bot!")
+print("Type 'exit' to stop.\n")
+
+while True:
+    user_question = input("You: ")
+    if user_question.lower() == "exit":
+        print("Bot: Thank you! Goodbye!")
+        break
+    response = get_answer(user_question)
+    print("Bot:", response)
