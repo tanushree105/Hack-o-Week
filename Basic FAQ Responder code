@@ -1,0 +1,446 @@
+<!doctype html>
+<html lang="en" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SYMBI AI - FAQ Chatbot</title>
+  <script src="/_sdk/element_sdk.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      box-sizing: border-box;
+    }
+   
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+   
+    * {
+      font-family: 'Inter', sans-serif;
+    }
+   
+    .message {
+      animation: slideIn 0.3s ease-out;
+    }
+   
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+   
+    .suggestion-btn:hover {
+      transform: translateY(-2px);
+      transition: all 0.2s ease;
+    }
+   
+    .typing-indicator {
+      display: inline-flex;
+      gap: 4px;
+    }
+   
+    .typing-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 100%;
+      animation: typing 1.4s infinite;
+    }
+   
+    .typing-dot:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+   
+    .typing-dot:nth-child(3) {
+      animation-delay: 0.4s;
+    }
+   
+    @keyframes typing {
+      0%, 60%, 100% {
+        opacity: 0.3;
+      }
+      30% {
+        opacity: 1;
+      }
+    }
+  </style>
+  <style>@view-transition { navigation: auto; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+ </head>
+ <body class="h-full">
+  <div id="app" class="h-full w-full overflow-auto"></div>
+  <script>
+    const defaultConfig = {
+      background_color: "#f0f4f8",
+      surface_color: "#ffffff",
+      text_color: "#1e293b",
+      primary_action_color: "#3b82f6",
+      secondary_action_color: "#64748b",
+      font_family: "Inter",
+      font_size: 16,
+      institute_name: "SYMBI AI",
+      welcome_message: "Hello! How can I help you today?",
+      phone_number: "+1-555-0123",
+      email_address: "info@institute.edu",
+      office_address: "123 Education Street, City, State 12345"
+    };
+
+    let config = { ...defaultConfig };
+    let chatHistory = [];
+
+    const faqData = [
+      {
+        patterns: ["hi", "hello", "hey", "hii", "hola", "greetings"],
+        answer: "Hello! 👋 Welcome to SYMBI AI! I'm here to help you with any questions about our institute. What would you like to know?"
+      },
+      {
+        patterns: ["how are you", "how r u", "how do you do", "what's up", "wassup", "whats up"],
+        answer: "I'm doing great, thank you for asking! 😊 I'm here and ready to help you with any information about SYMBI AI. How can I assist you today?"
+      },
+      {
+        patterns: ["good morning", "good afternoon", "good evening", "good night"],
+        answer: "Good day to you! ☀️ It's wonderful to hear from you. How can I help you learn more about SYMBI AI today?"
+      },
+      {
+        patterns: ["thank", "thanks", "thank you", "thankyou", "thx"],
+        answer: "You're very welcome! 😊 If you have any other questions about our institute, feel free to ask anytime!"
+      },
+      {
+        patterns: ["bye", "goodbye", "see you", "cya", "gtg", "got to go"],
+        answer: "Goodbye! 👋 It was great talking to you. Feel free to come back anytime you have questions. Have a wonderful day!"
+      },
+      {
+        patterns: ["who are you", "what are you", "your name"],
+        answer: "I'm SYMBI AI's FAQ assistant! 🤖 I'm here to answer all your questions about our institute - courses, fees, admissions, timings, and more. What would you like to know?"
+      },
+      {
+        patterns: ["help", "can you help", "need help"],
+        answer: "Of course! I'd be happy to help. 💙 I can answer questions about our timings, fees, courses, admissions, certifications, placements, facilities, and contact information. What interests you?"
+      },
+      {
+        patterns: ["timing", "time", "hours", "open", "close", "schedule", "when"],
+        answer: "Our institute is open Monday to Friday from 9:00 AM to 6:00 PM, and Saturday from 10:00 AM to 4:00 PM. We are closed on Sundays and public holidays."
+      },
+      {
+        patterns: ["fee", "fees", "cost", "price", "tuition", "payment", "charge"],
+        answer: "Our course fees vary by program. Basic courses start at ₹15,000, intermediate courses are ₹35,000, and advanced certification programs range from ₹75,000 to ₹1,50,000. We offer flexible payment plans and installment options."
+      },
+      {
+        patterns: ["contact", "phone", "call", "email", "reach", "address", "location"],
+        answer: `You can contact us at:\n📞 Phone: ${config.phone_number}\n📧 Email: ${config.email_address}\n📍 Address: ${config.office_address}`
+      },
+      {
+        patterns: ["course", "courses", "program", "programs", "class", "classes", "study"],
+        answer: "We offer courses in Software Development, Data Science, Digital Marketing, Graphic Design, and Business Management. Each program includes both theory and practical sessions with industry experts."
+      },
+      {
+        patterns: ["admission", "enroll", "register", "join", "apply", "application"],
+        answer: "Admissions are open year-round! You can apply online through our website or visit our office. Required documents include ID proof, educational certificates, and 2 passport photos. Processing takes 2-3 business days."
+      },
+      {
+        patterns: ["duration", "long", "length", "period", "how long"],
+        answer: "Course durations vary: Basic courses are 6-8 weeks, intermediate courses are 3-4 months, and advanced certification programs are 6-12 months. All courses include flexible weekend batches."
+      },
+      {
+        patterns: ["certificate", "certification", "diploma", "degree"],
+        answer: "Yes! Upon successful completion, you'll receive an industry-recognized certificate. Our certifications are valued by employers and can enhance your career prospects. We also provide digital certificates for easy sharing."
+      },
+      {
+        patterns: ["online", "remote", "virtual", "distance"],
+        answer: "Yes, we offer both in-person and online learning options! Our online classes feature live sessions, recorded lectures, interactive projects, and 24/7 access to learning materials. You can choose the format that suits you best."
+      },
+      {
+        patterns: ["prerequisite", "requirement", "eligibility", "qualification", "need"],
+        answer: "Prerequisites vary by course. Basic courses are open to all with high school education. Intermediate courses may require basic knowledge in the field. Advanced programs typically need relevant work experience or prior certification."
+      },
+      {
+        patterns: ["instructor", "teacher", "faculty", "trainer", "mentor"],
+        answer: "Our instructors are industry professionals with 5-15 years of experience. They hold advanced degrees and relevant certifications. All faculty members are dedicated to providing personalized attention and career guidance."
+      },
+      {
+        patterns: ["placement", "job", "career", "employment", "hire"],
+        answer: "We have a dedicated placement cell with an 85% placement record. We provide resume building, interview preparation, and connect you with our 200+ hiring partners. Many students secure jobs within 3 months of course completion."
+      },
+      {
+        patterns: ["facility", "facilities", "infrastructure", "lab", "library"],
+        answer: "Our facilities include air-conditioned classrooms, modern computer labs, high-speed internet, a well-stocked library, cafeteria, and dedicated project rooms. We also provide free parking and 24/7 security."
+      },
+      {
+        patterns: ["batch", "size", "students", "class size"],
+        answer: "We maintain small batch sizes of 15-20 students to ensure personalized attention. This allows instructors to focus on individual progress and provide hands-on guidance throughout the course."
+      },
+      {
+        patterns: ["demo", "trial", "free class", "sample", "preview"],
+        answer: "Yes! We offer free demo classes for all our courses. You can attend a trial session to experience our teaching methodology and meet the instructors. Book your free demo by calling us or registering online."
+      },
+      {
+        patterns: ["scholarship", "discount", "offer", "financial aid"],
+        answer: "We offer scholarships for meritorious students (up to 30% off), early bird discounts (15% off), and referral bonuses. Financial aid is available for economically disadvantaged students. Contact our admissions team for details."
+      }
+    ];
+
+    function matchPattern(userInput) {
+      const input = userInput.toLowerCase().trim();
+     
+      for (const faq of faqData) {
+        for (const pattern of faq.patterns) {
+          if (input.includes(pattern)) {
+            return faq.answer;
+          }
+        }
+      }
+     
+      return null;
+    }
+
+    function addMessage(text, isUser) {
+      chatHistory.push({ text, isUser, timestamp: Date.now() });
+      renderChat();
+    }
+
+    function showTypingIndicator() {
+      const chatContainer = document.getElementById('chat-container');
+      const typingDiv = document.createElement('div');
+      typingDiv.id = 'typing-indicator';
+      typingDiv.className = 'message flex items-start gap-3 mb-4';
+      typingDiv.innerHTML = `
+        <div class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-lg" style="background-color: ${config.primary_action_color}20; color: ${config.primary_action_color};">
+          🤖
+        </div>
+        <div class="px-4 py-3 rounded-2xl max-w-md" style="background-color: ${config.surface_color}; color: ${config.text_color}; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+          <div class="typing-indicator">
+            <div class="typing-dot" style="background-color: ${config.secondary_action_color};"></div>
+            <div class="typing-dot" style="background-color: ${config.secondary_action_color};"></div>
+            <div class="typing-dot" style="background-color: ${config.secondary_action_color};"></div>
+          </div>
+        </div>
+      `;
+      chatContainer.appendChild(typingDiv);
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+    function removeTypingIndicator() {
+      const indicator = document.getElementById('typing-indicator');
+      if (indicator) {
+        indicator.remove();
+      }
+    }
+
+    function handleUserMessage(userInput) {
+      if (!userInput.trim()) return;
+     
+      addMessage(userInput, true);
+     
+      const inputField = document.getElementById('user-input');
+      inputField.value = '';
+     
+      showTypingIndicator();
+     
+      setTimeout(() => {
+        removeTypingIndicator();
+       
+        const response = matchPattern(userInput);
+       
+        if (response) {
+          addMessage(response, false);
+        } else {
+          addMessage("I'm not sure about that. Here are some topics I can help with: timings, fees, courses, admissions, certifications, placements, facilities, or contact information. What would you like to know?", false);
+        }
+      }, 800);
+    }
+
+    function renderChat() {
+      const chatContainer = document.getElementById('chat-container');
+      const baseSize = config.font_size || defaultConfig.font_size;
+      const customFont = config.font_family || defaultConfig.font_family;
+      const baseFontStack = 'Inter, system-ui, -apple-system, sans-serif';
+     
+      let messagesHtml = '';
+     
+      chatHistory.forEach(msg => {
+        if (msg.isUser) {
+          messagesHtml += `
+            <div class="message flex justify-end mb-4">
+              <div class="px-4 py-3 rounded-2xl max-w-md" style="background-color: ${config.primary_action_color}; color: white; font-size: ${baseSize}px; font-family: ${customFont}, ${baseFontStack};">
+                ${msg.text.replace(/\n/g, '<br>')}
+              </div>
+            </div>
+          `;
+        } else {
+          messagesHtml += `
+            <div class="message flex items-start gap-3 mb-4">
+              <div class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center" style="background-color: ${config.primary_action_color}20; color: ${config.primary_action_color}; font-size: ${baseSize * 1.2}px;">
+                🤖
+              </div>
+              <div class="px-4 py-3 rounded-2xl max-w-md" style="background-color: ${config.surface_color}; color: ${config.text_color}; box-shadow: 0 1px 3px rgba(0,0,0,0.1); font-size: ${baseSize}px; font-family: ${customFont}, ${baseFontStack};">
+                ${msg.text.replace(/\n/g, '<br>')}
+              </div>
+            </div>
+          `;
+        }
+      });
+     
+      chatContainer.innerHTML = messagesHtml;
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+    function renderApp() {
+      const app = document.getElementById('app');
+      const baseSize = config.font_size || defaultConfig.font_size;
+      const customFont = config.font_family || defaultConfig.font_family;
+      const baseFontStack = 'Inter, system-ui, -apple-system, sans-serif';
+     
+      app.style.backgroundColor = config.background_color || defaultConfig.background_color;
+     
+      app.innerHTML = `
+        <div class="w-full" style="max-width: 800px; margin: 0 auto; height: 100%; display: flex; flex-direction: column; padding: 24px;">
+         
+          <!-- Header -->
+          <div class="mb-6 text-center">
+            <h1 style="font-size: ${baseSize * 2}px; font-weight: 700; margin-bottom: 8px; color: ${config.text_color}; font-family: ${customFont}, ${baseFontStack};">
+              ${config.institute_name || defaultConfig.institute_name}
+            </h1>
+            <p style="font-size: ${baseSize * 0.95}px; color: ${config.secondary_action_color}; font-family: ${customFont}, ${baseFontStack};">
+              FAQ Assistant - Ask me anything!
+            </p>
+          </div>
+
+          <!-- Suggestions -->
+          <div class="mb-4 flex flex-wrap gap-2 justify-center">
+            <button class="suggestion-btn px-4 py-2 rounded-full" style="background-color: ${config.surface_color}; color: ${config.text_color}; border: 1px solid ${config.secondary_action_color}40; font-size: ${baseSize * 0.85}px; cursor: pointer; font-family: ${customFont}, ${baseFontStack};" onclick="handleUserMessage('What are your timings?')">
+              ⏰ Timings
+            </button>
+            <button class="suggestion-btn px-4 py-2 rounded-full" style="background-color: ${config.surface_color}; color: ${config.text_color}; border: 1px solid ${config.secondary_action_color}40; font-size: ${baseSize * 0.85}px; cursor: pointer; font-family: ${customFont}, ${baseFontStack};" onclick="handleUserMessage('Tell me about fees')">
+              💰 Fees
+            </button>
+            <button class="suggestion-btn px-4 py-2 rounded-full" style="background-color: ${config.surface_color}; color: ${config.text_color}; border: 1px solid ${config.secondary_action_color}40; font-size: ${baseSize * 0.85}px; cursor: pointer; font-family: ${customFont}, ${baseFontStack};" onclick="handleUserMessage('What courses do you offer?')">
+              📚 Courses
+            </button>
+            <button class="suggestion-btn px-4 py-2 rounded-full" style="background-color: ${config.surface_color}; color: ${config.text_color}; border: 1px solid ${config.secondary_action_color}40; font-size: ${baseSize * 0.85}px; cursor: pointer; font-family: ${customFont}, ${baseFontStack};" onclick="handleUserMessage('How can I contact you?')">
+              📞 Contact
+            </button>
+          </div>
+
+          <!-- Chat Container -->
+          <div id="chat-container" class="flex-1 overflow-y-auto mb-4 px-4 py-4 rounded-2xl" style="background-color: ${config.background_color}; border: 1px solid ${config.secondary_action_color}20; min-height: 400px;">
+            <div class="message flex items-start gap-3 mb-4">
+              <div class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center" style="background-color: ${config.primary_action_color}20; color: ${config.primary_action_color}; font-size: ${baseSize * 1.2}px;">
+                🤖
+              </div>
+              <div class="px-4 py-3 rounded-2xl max-w-md" style="background-color: ${config.surface_color}; color: ${config.text_color}; box-shadow: 0 1px 3px rgba(0,0,0,0.1); font-size: ${baseSize}px; font-family: ${customFont}, ${baseFontStack};">
+                ${config.welcome_message || defaultConfig.welcome_message}
+              </div>
+            </div>
+          </div>
+
+          <!-- Input Area -->
+          <form id="chat-form" class="flex gap-2">
+            <input
+              type="text"
+              id="user-input"
+              placeholder="Type your question here..."
+              class="flex-1 px-4 py-3 rounded-xl outline-none"
+              style="background-color: ${config.surface_color}; color: ${config.text_color}; border: 2px solid ${config.secondary_action_color}20; font-size: ${baseSize}px; font-family: ${customFont}, ${baseFontStack};"
+            />
+            <button
+              type="submit"
+              class="px-6 py-3 rounded-xl font-medium"
+              style="background-color: ${config.primary_action_color}; color: white; font-size: ${baseSize}px; cursor: pointer; font-family: ${customFont}, ${baseFontStack}; transition: all 0.2s;"
+              onmouseover="this.style.opacity='0.9'"
+              onmouseout="this.style.opacity='1'"
+            >
+              Send
+            </button>
+          </form>
+        </div>
+      `;
+
+      const form = document.getElementById('chat-form');
+      form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const input = document.getElementById('user-input');
+        handleUserMessage(input.value);
+      });
+     
+      renderChat();
+    }
+
+    async function onConfigChange(newConfig) {
+      Object.assign(config, newConfig);
+      renderApp();
+    }
+
+    if (window.elementSdk) {
+      window.elementSdk.init({
+        defaultConfig,
+        onConfigChange,
+        mapToCapabilities: (cfg) => ({
+          recolorables: [
+            {
+              get: () => cfg.background_color || defaultConfig.background_color,
+              set: (value) => {
+                cfg.background_color = value;
+                window.elementSdk.setConfig({ background_color: value });
+              }
+            },
+            {
+              get: () => cfg.surface_color || defaultConfig.surface_color,
+              set: (value) => {
+                cfg.surface_color = value;
+                window.elementSdk.setConfig({ surface_color: value });
+              }
+            },
+            {
+              get: () => cfg.text_color || defaultConfig.text_color,
+              set: (value) => {
+                cfg.text_color = value;
+                window.elementSdk.setConfig({ text_color: value });
+              }
+            },
+            {
+              get: () => cfg.primary_action_color || defaultConfig.primary_action_color,
+              set: (value) => {
+                cfg.primary_action_color = value;
+                window.elementSdk.setConfig({ primary_action_color: value });
+              }
+            },
+            {
+              get: () => cfg.secondary_action_color || defaultConfig.secondary_action_color,
+              set: (value) => {
+                cfg.secondary_action_color = value;
+                window.elementSdk.setConfig({ secondary_action_color: value });
+              }
+            }
+          ],
+          borderables: [],
+          fontEditable: {
+            get: () => cfg.font_family || defaultConfig.font_family,
+            set: (value) => {
+              cfg.font_family = value;
+              window.elementSdk.setConfig({ font_family: value });
+            }
+          },
+          fontSizeable: {
+            get: () => cfg.font_size || defaultConfig.font_size,
+            set: (value) => {
+              cfg.font_size = value;
+              window.elementSdk.setConfig({ font_size: value });
+            }
+          }
+        }),
+        mapToEditPanelValues: (cfg) => new Map([
+          ["institute_name", cfg.institute_name || defaultConfig.institute_name],
+          ["welcome_message", cfg.welcome_message || defaultConfig.welcome_message],
+          ["phone_number", cfg.phone_number || defaultConfig.phone_number],
+          ["email_address", cfg.email_address || defaultConfig.email_address],
+          ["office_address", cfg.office_address || defaultConfig.office_address]
+        ])
+      });
+    }
+
+    renderApp();
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9ba95137331f84d1',t:'MTc2Nzg1MDM3Ny4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
