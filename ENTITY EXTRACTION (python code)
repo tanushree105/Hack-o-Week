@@ -1,0 +1,35 @@
+import re
+
+def extract_entities(text):
+    
+    course_code_pattern = r'\b[A-Z]{2,4}\d{2,3}\b'
+    semester_pattern = r'\b(?:Semester|Sem)\s?\d\b'
+    date_pattern1 = r'\b\d{1,2}[/-]\d{1,2}[/-]\d{2,4}\b'
+    date_pattern2 = r'\b\d{1,2}\s(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s\d{4}\b'
+    
+    course_codes = re.findall(course_code_pattern, text)
+    semesters = re.findall(semester_pattern, text)
+    dates1 = re.findall(date_pattern1, text)
+    dates2 = re.findall(date_pattern2, text)
+    
+    dates = dates1 + dates2
+    
+    course_names_list = ["Operating System", "Data Structures", 
+                         "Computer Networks", "Microprocessor", 
+                         "DBMS", "Machine Learning"]
+    
+    found_courses = []
+    for course in course_names_list:
+        if course.lower() in text.lower():
+            found_courses.append(course)
+    
+    print("----- Extracted Information -----")
+    print("Course Codes:", course_codes)
+    print("Semesters:", semesters)
+    print("Dates:", dates)
+    print("Course Names:", found_courses)
+
+
+query = "When is the exam for CS101 in Semester 3 on 18 Feb 2026 for Operating System?"
+
+extract_entities(query)
