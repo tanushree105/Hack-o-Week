@@ -1,0 +1,44 @@
+import pandas as pd
+
+products = pd.DataFrame({
+    "product_id": [1, 2, 3, 4, 5, 6, 7],
+    "product_name": [
+        "Smartphone", "Laptop", "Headphones",
+        "T-Shirt", "Jeans", "Shoes", "Watch"
+    ],
+    "category": [
+        "Electronics", "Electronics", "Electronics",
+        "Clothing", "Clothing", "Footwear", "Accessories"
+    ]
+})
+
+users = pd.DataFrame({
+    "user_id": [101, 102, 103],
+    "browsed_category": ["Electronics", "Clothing", "Electronics"],
+    "purchased_category": ["Electronics", "Clothing", "Accessories"]
+})
+
+def recommend_products(user_id):
+    user = users[users["user_id"] == user_id]
+
+    if user.empty:
+        return None
+
+    interest = user.iloc[0]["browsed_category"]
+
+    recommended = products[
+        products["category"] == interest
+    ]["product_name"].tolist()
+
+    return recommended
+
+user_id = int(input("Enter your User ID: "))
+
+recommendations = recommend_products(user_id)
+
+if recommendations:
+    print("\nRecommended Products for You:")
+    for product in recommendations:
+        print("-", product)
+else:
+    print("\nUser not found. Please register first.")
