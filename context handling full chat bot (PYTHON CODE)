@@ -1,0 +1,70 @@
+!pip -q install transformers accelerate torch
+
+import torch
+from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
+
+
+model_name = "google/flan-t5-large"
+
+print("Loading model... (first time takes 1-2 minutes)")
+tokenizer = AutoTokenizer.from_pretrained(model_name)
+model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
+
+device = "cuda" if torch.cuda.is_available() else "cpu"
+model = model.to(device)
+
+print("Model loaded successfully!\n")
+
+
+class FreeChatbot:
+    def __init__(self):
+        self.conversation_history = ""
+
+    def generate_response(self, user_input):
+  
+        self.conversation_history += f"\nUser: {user_input}\nAssistant:"
+
+  
+        inputs = tokenizer(
+            self.conversation_history,
+            return_tensors="pt",
+            truncation=True,
+            max_length=1024
+        ).to(device)
+
+
+        outputs = model.generate(
+            **inputs,
+            max_new_tokens=200,
+            temperature=0.7,
+            do_sample=True
+        )
+
+        response = tokenizer.decode(outputs[0], skip_special_tokens=True)
+
+
+        response = response.split("Assistant:")[-1].strip()
+
+  
+        self.conversation_history += " " + response
+
+        return response
+
+    def chat(self):
+        print("Free AI Chatbot is running!")
+        print("Type 'exit' to stop.\n")
+
+        while True:
+            user_input = input("You: ")
+
+            if user_input.lower() == "exit":
+                print("Bot: Goodbye!")
+                break
+
+            reply = self.generate_response(user_input)
+            print("Bot:", reply)
+            print()
+
+
+bot = FreeChatbot()
+bot.chat()
