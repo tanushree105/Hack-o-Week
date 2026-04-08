@@ -1,0 +1,79 @@
+#include <BLEDevice.h>
+#include <BLEUtils.h>
+#include <BLEScan.h>
+#include <BLEAdvertisedDevice.h>
+
+// Structure to store interaction data
+struct Interaction {
+  String address;
+  int rssi;
+  String strength;
+  unsigned long timestamp;
+};
+
+// Array to store up to 10 unique nearby devices
+const int MAX_INTERACTIONS = 10;
+Interaction interactionList[MAX_INTERACTIONS];
+int interactionCount = 0;
+
+int scanTime = 5; // Seconds
+BLEScan* pBLEScan;
+
+// Function to classify interaction strength based on RSSI
+String classifyProximity(int rssi) {
+  if (rssi > -60) return "IMMEDIATE (<1m)";
+  if (rssi > -75) return "NEAR (<3m)";
+  return "FAR (>3m)";
+}
+
+class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks {
+    void onResult(BLEAdvertisedDevice advertisedDevice) {
+      String mac = advertisedDevice.getAddress().toString().c_str();
+      int rssi = advertisedDevice.getRSSI();
+
+      // Check if device already in list to update it
+      for (int i = 0; i < interactionCount; i++) {
+        if (interactionList[i].address == mac) {
+          interactionList[i].rssi = rssi;
+          interactionList[i].strength = classifyProximity(rssi);
+          interactionList[i].timestamp = millis();
+          return;
+        }
+      }
+
+      // Add new device if space exists
+      if (interactionCount < MAX_INTERACTIONS) {
+        interactionList[interactionCount].address = mac;
+        interactionList[interactionCount].rssi = rssi;
+        interactionList[interactionCount].strength = classifyProximity(rssi);
+        interactionList[interactionCount].timestamp = millis();
+        interactionCount++;
+      }
+    }
+};
+
+void setup() {
+  Serial.begin(115200);
+  BLEDevice::init("");
+  pBLEScan = BLEDevice::getScan();
+  pBLEScan->setAdvertisedDeviceCallbacks(new MyAdvertisedDeviceCallbacks());
+  pBLEScan->setActiveScan(true);
+  pBLEScan->setInterval(100);
+  pBLEScan->setWindow(99);
+}
+
+void loop() {
+  Serial.println("Scanning...");
+  pBLEScan->start(scanTime);
+  
+  // Display stored data
+  for (int i = 0; i < interactionCount; i++) {
+    Serial.print("Device: "); Serial.print(interactionList[i].address);
+    Serial.print(" | RSSI: "); Serial.print(interactionList[i].rssi);
+    Serial.print(" | Proximity: "); Serial.println(interactionList[i].strength);
+  }
+  
+  // Clear list for next scan cycle (or implement timeout logic)
+  interactionCount = 0; 
+  delay(1000);
+}
