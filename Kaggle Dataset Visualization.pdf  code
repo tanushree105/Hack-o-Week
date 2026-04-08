@@ -1,0 +1,30 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# 1. Load data and ensure datetime format
+# Assuming your Kaggle dataset is at '/kaggle/input/dataset-name/file.csv'
+df = pd.read_csv('/kaggle/input/dataset-name/file.csv', parse_dates=['date'])
+df.set_index('date', inplace=True) # Essential for time-series analysis
+
+# 2. Compute averages
+# Global average distance
+overall_avg = df['distance'].mean()
+
+# Rolling average (e.g., 7-day window) to smooth fluctuations
+df['rolling_avg'] = df['distance'].rolling(window=7).mean()
+
+# 3. Plot distance trends
+plt.figure(figsize=(12, 6))
+plt.plot(df.index, df['distance'], label='Proximity Distance', alpha=0.5, color='blue')
+plt.plot(df.index, df['rolling_avg'], label='7-Day Rolling Average', color='red', linewidth=2)
+
+# Add baseline for global average
+plt.axhline(y=overall_avg, color='green', linestyle='--', label=f'Total Avg: {overall_avg:.2f}')
+
+# Formatting
+plt.title('Time-Series Proximity Trends')
+plt.xlabel('Date')
+plt.ylabel('Distance')
+plt.legend()
+plt.grid(True)
+plt.show()
