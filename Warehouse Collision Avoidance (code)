@@ -1,0 +1,28 @@
+import time
+
+# Initial AGV speed and log file
+agv_speed = 100  # percentage
+log_file = "incident_log.txt"
+
+def detect_worker():
+    """Simulate laser sensor input"""
+    user_input = input("Is worker in geofence? (yes/no): ")
+    return user_input.lower() == "yes"
+
+def log_incident():
+    with open(log_file, "a") as file:
+        file.write(f"Worker detected! AGV slowed at {time.ctime()}\n")
+
+print("Warehouse Collision Avoidance System Started\n")
+
+while True:
+    if detect_worker():
+        agv_speed = 30  # slow down
+        print("⚠ Worker detected! Slowing AGV...")
+        log_incident()
+    else:
+        agv_speed = 100  # normal speed
+        print("Area clear. AGV running normally.")
+    
+    print(f"Current AGV Speed: {agv_speed}%\n")
+    time.sleep(2)
