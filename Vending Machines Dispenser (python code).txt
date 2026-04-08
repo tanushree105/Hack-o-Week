@@ -1,0 +1,20 @@
+import time
+
+stock = 5
+
+print("System Ready (Simulation Mode)")
+
+while True:
+    sensor = input("Show hand? (y/n): ")
+
+    if sensor.lower() == 'y':
+        if stock > 0:
+            print("Dispensing item...")
+            time.sleep(1)
+
+            stock -= 1
+            print("Remaining:", stock)
+        else:
+            print("Out of stock")
+
+    time.sleep(1)
