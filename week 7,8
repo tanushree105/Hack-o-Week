@@ -1,0 +1,265 @@
+"""
+=====================================================================
+ SIT-N Hack-O-Week - Week 7 & 8 Practice Script
+ Topic     : Regression (Linear, Polynomial, Ridge/Lasso)
+             Classification (Logistic Regression, KNN)
+ Author    : Batch 2024-28
+ Run with  : python hack_o_week_week7_8_graphs.py
+=====================================================================
+
+Each function below:
+  1. Builds/loads a small dataset
+  2. Trains a model
+  3. Prints key numeric results to the console
+  4. Plots a graph, saves it as a PNG, and displays it on screen
+
+Requirements:
+  pip install numpy matplotlib scikit-learn
+"""
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+from sklearn.linear_model import LinearRegression, Ridge, Lasso, LogisticRegression
+from sklearn.preprocessing import PolynomialFeatures, StandardScaler
+from sklearn.pipeline import make_pipeline
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.datasets import make_classification
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_squared_error, accuracy_score
+
+RANDOM_STATE = 42
+np.random.seed(RANDOM_STATE)
+
+
+# =====================================================================
+# 1. REGRESSION
+# =====================================================================
+
+def linear_regression_demo():
+    """Fit a straight line y = mx + c to noisy linear data."""
+    print("\n--- 1a. Linear Regression ---")
+
+    X = np.linspace(0, 10, 40).reshape(-1, 1)
+    true_y = 3 * X.flatten() + 5
+    y = true_y + np.random.normal(0, 3, size=X.shape[0])
+
+    model = LinearRegression()
+    model.fit(X, y)
+    y_pred = model.predict(X)
+
+    mse = mean_squared_error(y, y_pred)
+    print(f"Learned equation : y = {model.coef_[0]:.2f}x + {model.intercept_:.2f}")
+    print(f"Mean Squared Error: {mse:.2f}")
+
+    plt.figure(figsize=(6, 4))
+    plt.scatter(X, y, color="tab:blue", alpha=0.7, label="Data points")
+    plt.plot(X, y_pred, color="tab:red", linewidth=2, label="Fitted line")
+    plt.title("Linear Regression")
+    plt.xlabel("X")
+    plt.ylabel("y")
+    plt.legend()
+    plt.grid(True, alpha=0.3)
+    plt.tight_layout()
+    plt.savefig("01_linear_regression.png", dpi=150)
+    plt.show()
+    plt.close()
+
+
+def polynomial_regression_demo():
+    """Compare underfitting vs a good fit vs overfitting using polynomial degree."""
+    print("\n--- 1b. Polynomial Regression ---")
+
+    X = np.linspace(-3, 3, 40).reshape(-1, 1)
+    y = (0.5 * X.flatten() ** 3 - X.flatten() ** 2 + 2
+         + np.random.normal(0, 2, size=X.shape[0]))
+
+    X_line = np.linspace(-3, 3, 200).reshape(-1, 1)
+
+    plt.figure(figsize=(6, 4))
+    plt.scatter(X, y, color="gray", alpha=0.7, label="Data points")
+
+    degrees = [1, 3, 9]
+    colors = ["tab:orange", "tab:green", "tab:red"]
+    labels = ["Degree 1 (underfit)", "Degree 3 (good fit)", "Degree 9 (overfit)"]
+
+    for degree, color, label in zip(degrees, colors, labels):
+        model = make_pipeline(PolynomialFeatures(degree), LinearRegression())
+        model.fit(X, y)
+        mse = mean_squared_error(y, model.predict(X))
+        print(f"Degree {degree:2d} -> training MSE: {mse:6.2f}")
+        plt.plot(X_line, model.predict(X_line), color=color, linewidth=2, label=label)
+
+    plt.title("Polynomial Regression: Underfit vs Good Fit vs Overfit")
+    plt.xlabel("X")
+    plt.ylabel("y")
+    plt.ylim(-20, 20)
+    plt.legend()
+    plt.grid(True, alpha=0.3)
+    plt.tight_layout()
+    plt.savefig("02_polynomial_regression.png", dpi=150)
+    plt.show()
+    plt.close()
+
+
+def ridge_lasso_demo():
+    """Show how Ridge (L2) and Lasso (L1) control overfitting compared to plain regression."""
+    print("\n--- 1c. Ridge / Lasso Regression ---")
+
+    X = np.linspace(-3, 3, 30).reshape(-1, 1)
+    y = (0.5 * X.flatten() ** 3 - X.flatten() ** 2 + 2
+         + np.random.normal(0, 2, size=X.shape[0]))
+
+    degree = 10
+    poly = PolynomialFeatures(degree)
+    scaler = StandardScaler()
+
+    # Scale polynomial features first -- this avoids the Lasso
+    # "did not converge" warning that turns up on raw, unscaled polynomial terms.
+    X_poly = poly.fit_transform(X)
+    X_poly_scaled = scaler.fit_transform(X_poly)
+
+    plain = LinearRegression().fit(X_poly_scaled, y)
+    ridge = Ridge(alpha=5.0).fit(X_poly_scaled, y)
+    lasso = Lasso(alpha=0.3, max_iter=50000).fit(X_poly_scaled, y)
+
+    n_nonzero = np.sum(lasso.coef_ != 0)
+    print(f"Plain regression - max |coef|: {np.max(np.abs(plain.coef_)):.2f}")
+    print(f"Ridge regression  - max |coef|: {np.max(np.abs(ridge.coef_)):.2f}")
+    print(f"Lasso regression  - max |coef|: {np.max(np.abs(lasso.coef_)):.2f}")
+    print(f"Lasso zeroed out {len(lasso.coef_) - n_nonzero} of {len(lasso.coef_)} coefficients "
+          f"(feature selection effect)")
+
+    X_line = np.linspace(-3, 3, 200).reshape(-1, 1)
+    X_line_poly_scaled = scaler.transform(poly.transform(X_line))
+
+    plt.figure(figsize=(6, 4))
+    plt.scatter(X, y, color="gray", alpha=0.7, label="Data points")
+    plt.plot(X_line, plain.predict(X_line_poly_scaled), color="tab:red",
+             label="No regularization (overfits)")
+    plt.plot(X_line, ridge.predict(X_line_poly_scaled), color="tab:blue",
+             label="Ridge (L2 penalty)")
+    plt.plot(X_line, lasso.predict(X_line_poly_scaled), color="tab:green",
+             label="Lasso (L1 penalty)")
+
+    plt.title(f"Ridge vs Lasso vs Plain Regression (degree {degree} polynomial)")
+    plt.xlabel("X")
+    plt.ylabel("y")
+    plt.ylim(-20, 20)
+    plt.legend()
+    plt.grid(True, alpha=0.3)
+    plt.tight_layout()
+    plt.savefig("03_ridge_lasso.png", dpi=150)
+    plt.show()
+    plt.close()
+
+
+# =====================================================================
+# 2. CLASSIFICATION
+# =====================================================================
+
+def logistic_regression_demo():
+    """Binary classification with a Logistic Regression decision boundary."""
+    print("\n--- 2a. Logistic Regression ---")
+
+    X, y = make_classification(
+        n_samples=200, n_features=2, n_redundant=0, n_informative=2,
+        n_clusters_per_class=1, class_sep=1.5, random_state=RANDOM_STATE,
+    )
+
+    model = LogisticRegression()
+    model.fit(X, y)
+    acc = accuracy_score(y, model.predict(X))
+    print(f"Training accuracy: {acc:.2f}")
+
+    xx, yy = np.meshgrid(
+        np.linspace(X[:, 0].min() - 1, X[:, 0].max() + 1, 300),
+        np.linspace(X[:, 1].min() - 1, X[:, 1].max() + 1, 300),
+    )
+    grid_points = np.c_[xx.ravel(), yy.ravel()]
+    Z = model.predict_proba(grid_points)[:, 1].reshape(xx.shape)
+
+    plt.figure(figsize=(6, 5))
+    plt.contourf(xx, yy, Z, levels=20, cmap="RdBu", alpha=0.6)
+    plt.colorbar(label="P(class = 1)")
+    plt.contour(xx, yy, Z, levels=[0.5], colors="black", linewidths=2)
+    plt.scatter(X[:, 0], X[:, 1], c=y, cmap="RdBu", edgecolor="k")
+
+    plt.title(f"Logistic Regression Decision Boundary (train acc = {acc:.2f})")
+    plt.xlabel("Feature 1")
+    plt.ylabel("Feature 2")
+    plt.tight_layout()
+    plt.savefig("04_logistic_regression.png", dpi=150)
+    plt.show()
+    plt.close()
+
+
+def knn_demo():
+    """Compare KNN decision boundaries for small, medium, and large k."""
+    print("\n--- 2b. K-Nearest Neighbors (KNN) ---")
+
+    X, y = make_classification(
+        n_samples=200, n_features=2, n_redundant=0, n_informative=2,
+        n_clusters_per_class=1, class_sep=1.2, random_state=7,
+    )
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.3, random_state=7
+    )
+
+    xx, yy = np.meshgrid(
+        np.linspace(X[:, 0].min() - 1, X[:, 0].max() + 1, 300),
+        np.linspace(X[:, 1].min() - 1, X[:, 1].max() + 1, 300),
+    )
+    grid_points = np.c_[xx.ravel(), yy.ravel()]
+
+    fig, axes = plt.subplots(1, 3, figsize=(15, 4.5))
+
+    for ax, k in zip(axes, [1, 5, 20]):
+        model = KNeighborsClassifier(n_neighbors=k)
+        model.fit(X_train, y_train)
+        acc = accuracy_score(y_test, model.predict(X_test))
+        print(f"k = {k:2d} -> test accuracy: {acc:.2f}")
+
+        Z = model.predict(grid_points).reshape(xx.shape)
+        ax.contourf(xx, yy, Z, levels=1, cmap="RdBu", alpha=0.5)
+        ax.scatter(X_train[:, 0], X_train[:, 1], c=y_train, cmap="RdBu",
+                   edgecolor="k", s=25)
+        ax.set_title(f"k = {k}  (test acc = {acc:.2f})")
+        ax.set_xlabel("Feature 1")
+        ax.set_ylabel("Feature 2")
+
+    plt.suptitle("KNN Decision Boundaries for Different k Values")
+    plt.tight_layout()
+    plt.savefig("05_knn.png", dpi=150)
+    plt.show()
+    plt.close()
+
+
+# =====================================================================
+# MAIN
+# =====================================================================
+
+def main():
+    print("=" * 60)
+    print(" SIT-N Hack-O-Week - Week 7 & 8: Regression & Classification")
+    print("=" * 60)
+
+    print("\n### 1. REGRESSION ###")
+    linear_regression_demo()
+    polynomial_regression_demo()
+    ridge_lasso_demo()
+
+    print("\n### 2. CLASSIFICATION ###")
+    logistic_regression_demo()
+    knn_demo()
+
+    print("\nAll done. 5 graphs saved as PNG files in the current folder:")
+    print("  01_linear_regression.png")
+    print("  02_polynomial_regression.png")
+    print("  03_ridge_lasso.png")
+    print("  04_logistic_regression.png")
+    print("  05_knn.png")
+
+
+if __name__ == "__main__":
+    main()
