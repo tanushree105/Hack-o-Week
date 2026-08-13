@@ -1,0 +1,200 @@
+"""
+SIT-N Hack-O-Week — Week 3 & 4 Practice Script
+5th Semester Students
+
+Covers:
+1. Python Essentials: functions, OOP, list/dict comprehensions
+2. NumPy: arrays, broadcasting, vectorized ops
+3. Pandas: dataframes, cleaning, merging, groupby
+4. Data Visualization: Matplotlib, Seaborn
+
+Run: python hack_o_week_practice.py
+"""
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+
+# =========================================================
+# 1. PYTHON ESSENTIALS
+# =========================================================
+
+# ---- Functions ----
+def add(a, b):
+    """Return the sum of two numbers."""
+    return a + b
+
+
+def greet(name, greeting="Hello"):
+    """Function with a default argument."""
+    return f"{greeting}, {name}!"
+
+
+def stats(*numbers):
+    """Function with variable-length arguments."""
+    return {"sum": sum(numbers), "avg": sum(numbers) / len(numbers)}
+
+
+# ---- OOP ----
+class Student:
+    """Simple class demonstrating OOP concepts."""
+
+    college = "SIT Nagpur"  # class attribute
+
+    def __init__(self, name, marks):
+        self.name = name
+        self.marks = marks
+
+    def average(self):
+        return sum(self.marks) / len(self.marks)
+
+    def __repr__(self):
+        return f"Student(name={self.name!r}, avg={self.average():.2f})"
+
+
+class TopperStudent(Student):
+    """Inheritance example."""
+
+    def __init__(self, name, marks, rank):
+        super().__init__(name, marks)
+        self.rank = rank
+
+    def __repr__(self):
+        return f"TopperStudent(name={self.name!r}, rank={self.rank})"
+
+
+# ---- List / Dict Comprehensions ----
+squares = [x ** 2 for x in range(10)]
+evens_only = [x for x in range(20) if x % 2 == 0]
+name_lengths = {name: len(name) for name in ["Aditi", "Rahul", "Sara"]}
+matrix_flatten = [val for row in [[1, 2], [3, 4], [5, 6]] for val in row]
+
+
+def run_python_essentials():
+    print("=== 1. Python Essentials ===")
+    print(add(5, 3))
+    print(greet("Batch 2024-28"))
+    print(stats(10, 20, 30))
+
+    s1 = Student("Aditi", [80, 90, 85])
+    s2 = TopperStudent("Rahul", [95, 98, 92], rank=1)
+    print(s1)
+    print(s2)
+    print("College:", Student.college)
+
+    print("Squares:", squares)
+    print("Evens:", evens_only)
+    print("Name lengths:", name_lengths)
+    print("Flattened matrix:", matrix_flatten)
+    print()
+
+
+# =========================================================
+# 2. NUMPY
+# =========================================================
+
+def run_numpy():
+    print("=== 2. NumPy ===")
+
+    # Arrays
+    arr1 = np.array([1, 2, 3, 4, 5])
+    arr2d = np.array([[1, 2, 3], [4, 5, 6]])
+    print("1D array:", arr1)
+    print("2D array:\n", arr2d)
+    print("Shape:", arr2d.shape)
+
+    # Broadcasting
+    scaled = arr1 * 10          # scalar broadcast
+    added = arr2d + np.array([1, 0, 1])  # row broadcast
+    print("Scaled (broadcast):", scaled)
+    print("Row-broadcast add:\n", added)
+
+    # Vectorized operations (no explicit loops)
+    a = np.arange(1, 6)
+    b = np.arange(6, 11)
+    print("Vectorized sum:", a + b)
+    print("Vectorized square root:", np.sqrt(a))
+    print("Vectorized mean/std:", a.mean(), a.std())
+    print()
+
+
+# =========================================================
+# 3. PANDAS
+# =========================================================
+
+def run_pandas():
+    print("=== 3. Pandas ===")
+
+    # DataFrames
+    df = pd.DataFrame({
+        "name": ["Aditi", "Rahul", "Sara", "Kabir", None],
+        "branch": ["CSE", "IT", "CSE", "ECE", "IT"],
+        "marks": [85, 90, None, 78, 88],
+    })
+    print("Raw DataFrame:\n", df)
+
+    # Cleaning
+    df_clean = df.dropna(subset=["name"]).copy()
+    df_clean["marks"] = df_clean["marks"].fillna(df_clean["marks"].mean())
+    print("\nCleaned DataFrame:\n", df_clean)
+
+    # Merging
+    branch_info = pd.DataFrame({
+        "branch": ["CSE", "IT", "ECE"],
+        "hod": ["Dr. Sharma", "Dr. Verma", "Dr. Rao"],
+    })
+    merged = pd.merge(df_clean, branch_info, on="branch", how="left")
+    print("\nMerged DataFrame:\n", merged)
+
+    # GroupBy
+    grouped = merged.groupby("branch")["marks"].mean().reset_index()
+    print("\nAverage marks by branch:\n", grouped)
+    print()
+
+    return merged, grouped
+
+
+# =========================================================
+# 4. DATA VISUALIZATION (Matplotlib + Seaborn)
+# =========================================================
+
+def run_visualization(merged, grouped):
+    print("=== 4. Data Visualization ===")
+
+    # Matplotlib: simple bar chart
+    plt.figure(figsize=(6, 4))
+    plt.bar(grouped["branch"], grouped["marks"], color="skyblue")
+    plt.title("Average Marks by Branch (Matplotlib)")
+    plt.xlabel("Branch")
+    plt.ylabel("Average Marks")
+    plt.tight_layout()
+    plt.savefig("matplotlib_bar_chart.png")
+    plt.close()
+    print("Saved matplotlib_bar_chart.png")
+
+    # Seaborn: styled bar plot + scatter
+    sns.set_theme(style="whitegrid")
+
+    plt.figure(figsize=(6, 4))
+    sns.barplot(data=merged, x="branch", y="marks")
+    plt.title("Marks by Branch (Seaborn)")
+    plt.tight_layout()
+    plt.savefig("seaborn_bar_chart.png")
+    plt.close()
+    print("Saved seaborn_bar_chart.png")
+
+    print()
+
+
+# =========================================================
+# MAIN
+# =========================================================
+
+if __name__ == "__main__":
+    run_python_essentials()
+    run_numpy()
+    merged_df, grouped_df = run_pandas()
+    run_visualization(merged_df, grouped_df)
+    print("All Week 3 & 4 topics demonstrated successfully!")
