@@ -1,0 +1,283 @@
+import numpy as np
+import sympy as sp
+import matplotlib.pyplot as plt
+
+
+# =========================================================
+# 1. LINEAR ALGEBRA
+# =========================================================
+
+def plot_vectors():
+    print("--- Vectors ---")
+    v1 = np.array([2, 3])
+    v2 = np.array([1, -1])
+    v_sum = v1 + v2
+
+    print("v1:", v1, " v2:", v2, " v1+v2:", v_sum)
+    print("Magnitude of v1:", np.linalg.norm(v1))
+
+    fig, ax = plt.subplots(figsize=(5, 5))
+    origin = [0, 0]
+
+    ax.quiver(*origin, *v1, angles="xy", scale_units="xy", scale=1,
+               color="tab:blue", label="v1")
+    ax.quiver(*origin, *v2, angles="xy", scale_units="xy", scale=1,
+               color="tab:orange", label="v2")
+    ax.quiver(*origin, *v_sum, angles="xy", scale_units="xy", scale=1,
+               color="tab:green", label="v1 + v2")
+
+    ax.set_xlim(-2, 5)
+    ax.set_ylim(-2, 5)
+    ax.axhline(0, color="gray", linewidth=0.5)
+    ax.axvline(0, color="gray", linewidth=0.5)
+    ax.set_title("Vectors: v1, v2 and v1 + v2")
+    ax.legend()
+    ax.grid(True)
+    ax.set_aspect("equal")
+    plt.tight_layout()
+    plt.savefig("01_vectors.png")
+    plt.show()
+    print("Saved 01_vectors.png\n")
+
+
+def plot_matrix_transformation():
+    print("--- Matrices (as transformations) ---")
+    A = np.array([[2, 1], [1, 1.5]])
+    print("Matrix A:\n", A)
+
+    # Unit square corners
+    square = np.array([[0, 0], [1, 0], [1, 1], [0, 1], [0, 0]]).T
+    transformed = A @ square
+
+    fig, ax = plt.subplots(figsize=(5, 5))
+    ax.plot(square[0], square[1], "o-", color="tab:blue", label="Original square")
+    ax.plot(transformed[0], transformed[1], "o-", color="tab:red",
+             label="A @ square (transformed)")
+
+    ax.axhline(0, color="gray", linewidth=0.5)
+    ax.axvline(0, color="gray", linewidth=0.5)
+    ax.set_title("Matrix as a Linear Transformation")
+    ax.legend()
+    ax.grid(True)
+    ax.set_aspect("equal")
+    plt.tight_layout()
+    plt.savefig("02_matrix_transformation.png")
+    plt.show()
+    print("Saved 02_matrix_transformation.png\n")
+
+
+def plot_dot_product():
+    print("--- Dot Product (projection & angle) ---")
+    a = np.array([4, 1])
+    b = np.array([2, 3])
+    dot = np.dot(a, b)
+    cos_theta = dot / (np.linalg.norm(a) * np.linalg.norm(b))
+    angle_deg = np.degrees(np.arccos(cos_theta))
+    print(f"a.b = {dot}, angle = {angle_deg:.2f} deg")
+
+    # Projection of b onto a
+    proj_length = dot / np.linalg.norm(a)
+    proj_vec = (dot / np.dot(a, a)) * a
+
+    fig, ax = plt.subplots(figsize=(5, 5))
+    origin = [0, 0]
+    ax.quiver(*origin, *a, angles="xy", scale_units="xy", scale=1,
+               color="tab:blue", label="a")
+    ax.quiver(*origin, *b, angles="xy", scale_units="xy", scale=1,
+               color="tab:orange", label="b")
+    ax.quiver(*origin, *proj_vec, angles="xy", scale_units="xy", scale=1,
+               color="tab:green", label="projection of b on a")
+
+    ax.set_xlim(-1, 5)
+    ax.set_ylim(-1, 5)
+    ax.axhline(0, color="gray", linewidth=0.5)
+    ax.axvline(0, color="gray", linewidth=0.5)
+    ax.set_title(f"Dot Product: angle = {angle_deg:.1f} deg")
+    ax.legend()
+    ax.grid(True)
+    ax.set_aspect("equal")
+    plt.tight_layout()
+    plt.savefig("03_dot_product.png")
+    plt.show()
+    print("Saved 03_dot_product.png\n")
+
+
+def plot_eigenvectors():
+    print("--- Eigenvalues & Eigenvectors ---")
+    M = np.array([[4, 1], [2, 3]])
+    eigenvalues, eigenvectors = np.linalg.eig(M)
+    print("Eigenvalues:", eigenvalues)
+
+    fig, ax = plt.subplots(figsize=(5, 5))
+    origin = [0, 0]
+    colors = ["tab:blue", "tab:red"]
+
+    for i in range(2):
+        v = eigenvectors[:, i]
+        Mv = M @ v
+        ax.quiver(*origin, *v, angles="xy", scale_units="xy", scale=1,
+                   color=colors[i], label=f"eigenvector {i+1}", width=0.008)
+        ax.quiver(*origin, *Mv, angles="xy", scale_units="xy", scale=1,
+                   color=colors[i], alpha=0.4,
+                   label=f"M @ eigenvector {i+1} (= {eigenvalues[i]:.1f} * v)",
+                   width=0.02)
+
+    ax.set_xlim(-2, 3)
+    ax.set_ylim(-1, 3)
+    ax.axhline(0, color="gray", linewidth=0.5)
+    ax.axvline(0, color="gray", linewidth=0.5)
+    ax.set_title("Eigenvectors: M@v stays on the same line as v")
+    ax.legend(fontsize=8)
+    ax.grid(True)
+    ax.set_aspect("equal")
+    plt.tight_layout()
+    plt.savefig("04_eigenvectors.png")
+    plt.show()
+    print("Saved 04_eigenvectors.png\n")
+
+
+# =========================================================
+# 2. CALCULUS
+# =========================================================
+
+def plot_derivative():
+    print("--- Derivatives (function + tangent line) ---")
+    x = sp.symbols("x")
+    f = x**3 - 3 * x**2 + 2
+    f_prime = sp.diff(f, x)
+    print(f"f(x) = {f}")
+    print(f"f'(x) = {f_prime}")
+
+    f_np = sp.lambdify(x, f, "numpy")
+    fprime_np = sp.lambdify(x, f_prime, "numpy")
+
+    xs = np.linspace(-1.5, 3.5, 400)
+    ys = f_np(xs)
+
+    x0 = 2.5
+    slope = fprime_np(x0)
+    tangent = f_np(x0) + slope * (xs - x0)
+
+    fig, ax = plt.subplots(figsize=(6, 4))
+    ax.plot(xs, ys, label="f(x) = x^3 - 3x^2 + 2", color="tab:blue")
+    ax.plot(xs, tangent, "--", label=f"Tangent at x={x0} (slope={slope:.2f})",
+             color="tab:red")
+    ax.scatter([x0], [f_np(x0)], color="black", zorder=5)
+
+    ax.set_title("Derivative = Slope of Tangent Line")
+    ax.set_xlabel("x")
+    ax.set_ylabel("f(x)")
+    ax.set_ylim(-5, 10)
+    ax.legend()
+    ax.grid(True)
+    plt.tight_layout()
+    plt.savefig("05_derivative_tangent.png")
+    plt.show()
+    print("Saved 05_derivative_tangent.png\n")
+
+
+def plot_gradient_descent():
+    print("--- Gradients & Gradient Descent ---")
+    x, y = sp.symbols("x y")
+    f = x**2 + y**2  # simple bowl-shaped loss function
+
+    grad_f = [sp.diff(f, var) for var in (x, y)]
+    f_np = sp.lambdify((x, y), f, "numpy")
+    grad_np = sp.lambdify((x, y), grad_f, "numpy")
+
+    # Gradient descent path
+    point = np.array([4.0, 3.0])
+    lr = 0.2
+    path = [point.copy()]
+    for _ in range(15):
+        g = np.array(grad_np(point[0], point[1]))
+        point = point - lr * g
+        path.append(point.copy())
+    path = np.array(path)
+    print("Gradient descent path (first & last):", path[0], "->", path[-1])
+
+    # Contour plot of the loss surface
+    xs = np.linspace(-5, 5, 200)
+    ys = np.linspace(-5, 5, 200)
+    X, Y = np.meshgrid(xs, ys)
+    Z = f_np(X, Y)
+
+    fig, ax = plt.subplots(figsize=(6, 5))
+    contours = ax.contour(X, Y, Z, levels=20, cmap="viridis")
+    ax.clabel(contours, inline=True, fontsize=7)
+    ax.plot(path[:, 0], path[:, 1], "o-", color="red", label="Gradient descent path")
+    ax.scatter([0], [0], color="black", marker="*", s=150, label="Minimum")
+
+    ax.set_title("Gradient Descent on f(x,y) = x^2 + y^2")
+    ax.set_xlabel("x")
+    ax.set_ylabel("y")
+    ax.legend()
+    plt.tight_layout()
+    plt.savefig("06_gradient_descent.png")
+    plt.show()
+    print("Saved 06_gradient_descent.png\n")
+
+
+def plot_chain_rule():
+    print("--- Chain Rule (backprop intuition) ---")
+    x = sp.symbols("x")
+
+    inner = 2 * x + 1              # z = 2x + 1
+    outer = sp.sin(inner)          # a = sin(z)
+    d_outer = sp.diff(outer, x)    # da/dx via chain rule
+
+    inner_np = sp.lambdify(x, inner, "numpy")
+    outer_np = sp.lambdify(x, outer, "numpy")
+    slope_np = sp.lambdify(x, d_outer, "numpy")
+
+    print(f"z = {inner}, a = sin(z)")
+    print(f"da/dx (chain rule) = {d_outer}")
+
+    xs = np.linspace(-2, 2, 400)
+
+    fig, axes = plt.subplots(1, 3, figsize=(14, 4))
+
+    axes[0].plot(xs, inner_np(xs), color="tab:blue")
+    axes[0].set_title("Layer 1: z = 2x + 1")
+    axes[0].set_xlabel("x")
+    axes[0].set_ylabel("z")
+    axes[0].grid(True)
+
+    axes[1].plot(inner_np(xs), np.sin(inner_np(xs)), color="tab:orange")
+    axes[1].set_title("Layer 2: a = sin(z)")
+    axes[1].set_xlabel("z")
+    axes[1].set_ylabel("a")
+    axes[1].grid(True)
+
+    axes[2].plot(xs, outer_np(xs), color="tab:green", label="a = sin(2x+1)")
+    axes[2].plot(xs, slope_np(xs), "--", color="tab:red",
+                  label="da/dx (chain rule)")
+    axes[2].set_title("Composite Function & its Derivative")
+    axes[2].set_xlabel("x")
+    axes[2].legend(fontsize=8)
+    axes[2].grid(True)
+
+    plt.suptitle("Chain Rule: x -> z -> a  (like layers in a neural net)")
+    plt.tight_layout()
+    plt.savefig("07_chain_rule.png")
+    plt.show()
+    print("Saved 07_chain_rule.png\n")
+
+
+# =========================================================
+# MAIN
+# =========================================================
+
+if __name__ == "__main__":
+    print("=== 1. Linear Algebra ===")
+    plot_vectors()
+    plot_matrix_transformation()
+    plot_dot_product()
+    plot_eigenvectors()
+
+    print("=== 2. Calculus ===")
+    plot_derivative()
+    plot_gradient_descent()
+    plot_chain_rule()
+
+    print("All graphs generated successfully! Check the .png files in this folder.")
